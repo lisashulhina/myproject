@@ -34,9 +34,9 @@ def read_file_database(user, password, host, database):
             table = input("Input table name: ")
             df = pd.read_sql("select * from " + database + "." + table + ";", cnx)
             table_flag = True
-        except:
+        except InputError:
             print("Something went wrong with input! Try again!")
-    #PETSALE
+    # PETSALE
     print(df)
     print("\n")
     return df
@@ -54,7 +54,7 @@ def bar_chart(dictionary1, dictionary2):
 
 
 def choice(df, dic_for_col):
-    """ record choosen columns """
+    """ record chosen columns """
     global choice_quantitative, choice_categorical
     flag1 = False
     flag2 = False
@@ -65,11 +65,10 @@ def choice(df, dic_for_col):
                 try:
                     choice_quantitative = int(input("Enter quantitative column: "))
                     choice_quantitative_flag = True
-                except:
+                except InputError:
                     print("Something went wrong with input! Try again!")
             if choice_quantitative in dic_for_col.keys() and (
-                    str(type(df.iloc[0, choice_quantitative])) == "<class 'numpy.int64'>" or str(
-                type(df.iloc[0, choice_quantitative])) == "<class 'numpy.float64'>"):
+                    str(type(df.iloc[0, choice_quantitative])) in ["<class 'numpy.int64'>", "<class 'numpy.float64'>"]):
                 flag1 = True
             else:
                 print(choice_quantitative, "is not a quantitative column! Try again!")
@@ -80,7 +79,7 @@ def choice(df, dic_for_col):
                 try:
                     choice_categorical = int(input("Enter categorical column: "))
                     choice_categorical_flag = True
-                except:
+                except InputError:
                     print("Something went wrong with input! Try again!")
             if choice_categorical in dic_for_col.keys() and str(
                     type(df.iloc[0, choice_categorical])) == "<class 'str'>":
@@ -147,7 +146,7 @@ def count_average2(new_dictionary, dictionary, choice_quantitative):
     for keys in new_dictionary.keys():
         average1 = new_dictionary[keys] / dictionary[keys]
         average.append(average1)
-        print("For "+ str(keys) + "'s " + choice_quantitative + " the average is " + str(format(average1, '.2f')))
+        print("For " + str(keys) + "'s " + choice_quantitative + " the average is " + str(format(average1, '.2f')))
     print("\n")
     return average
 
@@ -205,7 +204,7 @@ def choice_category(df, choice_categorical):
             try:
                 choice_category_to_show = int(input("What category do you want to show? "))
                 choice_category_to_show_flag = True
-            except:
+            except ValueError:
                 print("Something went wrong with input! Try again!")
         if choice_category_to_show not in dictionary.keys():
             print("It is not a category! Try again!")
@@ -221,7 +220,7 @@ def choose_data_source():
     while not flag:
         try:
             choice = input("1 CSV file on your computer \n2 Database\n")
-            if choice.isnumeric() == False:
+            if not choice.isnumeric():
                 raise TypeError
             else:
                 choice = int(choice)
@@ -247,7 +246,7 @@ def read_file(choice1):
                 path = input("Enter path :")
                 df = read_file_csv(path)
                 path_flag = True
-            except:
+            except OSError:
                 print("You entered wrong path! Try again!")
         # /Users/liza/Downloads/YB.csv
         return df
@@ -260,7 +259,7 @@ def read_file(choice1):
                     try:
                         user = input("Enter database user:")
                         user_flag = True
-                    except:
+                    except TypeError:
                         print("You enter wrong user type! Try again!")
 
                 password_flag = False
@@ -268,7 +267,7 @@ def read_file(choice1):
                     try:
                         password = input("Enter database password:")
                         password_flag = True
-                    except:
+                    except InputError:
                         print("You enter wrong password type ! Try again!")
 
                 host_flag = False
@@ -276,7 +275,7 @@ def read_file(choice1):
                     try:
                         host = input("Enter database host:")
                         host_flag = True
-                    except:
+                    except InputError:
                         print("You enter wrong host type! Try again!")
 
                 database_flag = False
@@ -284,45 +283,62 @@ def read_file(choice1):
                     try:
                         database = input("Enter database name:")
                         database_flag = True
-                    except:
+                    except InputError:
                         print("You enter wrong database type ! Try again!")
 
                 df = read_file_database(user, password, host, database)
                 flag = True
                 return df
-            except:
+            except FileNotFoundError:
                 print("Can't find database! Try again!")
     else:
         print("Can't find data")
 
 
-def main():
-    # choosing from where to read data from a file or database
-    data_choise = choose_data_source()
+# choosing from where to read data from a file or database
+data_choice = choose_data_source()
 
-    # read data from chosen directory
-    df = read_file(data_choise)
+# read data from chosen directory
+df = read_file(data_choice)
 
-    # choosing quantitative and categorical columns
-    choice_quantitative, choice_categorical = choice(df, dic_for_col(df))
+# choosing quantitative and categorical columns
+choice_quantitative, choice_categorical = choice(df, dic_for_col(df))
 
-    # creating list with quantitative values
-    list1 = write_to_list(df, choice_quantitative)
+# creating list with quantitative values
+list1 = write_to_list(df, choice_quantitative)
 
-    # calculating average
-    count_average(list1, choice_quantitative)
+# calculating average
+count_average(list1, choice_quantitative)
 
-    # creating list with categorical values
-    dictionary = dic_with_count(df, choice_categorical)
+# creating list with categorical values
+dictionary = dic_with_count(df, choice_categorical)
 
-    # creating dictionary with quantitative and categorical values
-    new_dictionary = dic_with_full(df, choice_categorical, choice_quantitative)
+# creating dictionary with quantitative and categorical values
+new_dictionary = dic_with_full(df, choice_categorical, choice_quantitative)
 
-    # calculating average for each category
-    average = count_average2(new_dictionary, dictionary,choice_quantitative)
+# calculating average for each category
+average = count_average2(new_dictionary, dictionary, choice_quantitative)
 
-    # creating line chart
-    line_chart(df, choice_quantitative, choice_categorical, choice_category(df, choice_categorical))
+# creating line chart
+line_chart(df, choice_quantitative, choice_categorical, choice_category(df, choice_categorical))
 
-    # creating bar chart
-    bar_chart(dictionary.keys(), average)
+# creating bar chart
+bar_chart(dictionary.keys(), average)
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class InputError(Error):
+    """Exception raised for errors in the input.
+
+    Attributes:
+        expression -- input expression in which the error occurred
+        message -- explanation of the error
+    """
+
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
